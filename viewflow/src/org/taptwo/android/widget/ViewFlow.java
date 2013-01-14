@@ -67,6 +67,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	private int mNextScreen = INVALID_SCREEN;
 	private boolean mFirstLayout = true;
 	private ViewSwitchListener mViewSwitchListener;
+	private ViewAnimationListener mViewAnimationListener;
 	private ViewLazyInitializeListener mViewInitializeListener;
 	private EnumSet<LazyInit> mLazyInit = EnumSet.allOf(LazyInit.class);
 	private Adapter mAdapter;
@@ -84,6 +85,11 @@ public class ViewFlow extends AdapterView<Adapter> {
 			setSelection(mCurrentAdapterIndex);
 		}
 	};
+
+	public static interface ViewAnimationListener {
+
+		void onChangePosition(int position, boolean rd, int next);
+	}
 
 	/**
 	 * Receives call backs when a new {@link View} has been scrolled to.
@@ -422,6 +428,26 @@ public class ViewFlow extends AdapterView<Adapter> {
 					* getWidth();
 			mIndicator.onScrolled(hPerceived, v, oldh, oldv);
 		}
+
+		if (null != mViewAnimationListener) {
+			final int W = getWidth()/2;
+			int hAnim = Math.abs(h - (mCurrentAdapterIndex * getWidth()));
+			boolean rd = false;
+			if (hAnim > W) {
+				rd = true;
+				hAnim = W - (hAnim - W);
+			}
+
+			int next;
+
+			if (h > oldh) {
+				next = mCurrentScreen + 1;
+			} else {
+				next = mCurrentScreen - 1;
+			}
+
+			mViewAnimationListener.onChangePosition((hAnim * 100) / W, rd ,next);
+		}
 	}
 
 	private void snapToDestination() {
@@ -507,6 +533,10 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 	public void setOnViewLazyInitializeListener(ViewLazyInitializeListener l) {
 		mViewInitializeListener = l;
+	}
+
+	public void setOnViewAnimationListener(ViewAnimationListener l) {
+		mViewAnimationListener = l;
 	}
 
 	@Override
