@@ -5,3 +5,4 @@ gen
 target
 local.properties
 proguard.cfg
+.classpath
