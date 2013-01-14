@@ -432,6 +432,20 @@ public class ViewFlow extends AdapterView<Adapter> {
 		snapToScreen(whichScreen);
 	}
 
+	public void scrollLeft() {
+		Log.v("FlowView", "ScrollLeft" + Integer.toString(mCurrentScreen));
+		if((getChildCount() - 1) > mCurrentScreen) {
+			snapToScreen(mCurrentScreen + 1);
+		}
+	}
+
+	public void scrollRight() {
+		Log.v("FlowView", "ScrollRight" + Integer.toString(mCurrentScreen));
+		if(mCurrentScreen > 0) {
+			snapToScreen(mCurrentScreen - 1);
+		}
+	}
+
 	private void snapToScreen(int whichScreen) {
 		mLastScrollDirection = whichScreen - mCurrentScreen;
 		if (!mScroller.isFinished())
