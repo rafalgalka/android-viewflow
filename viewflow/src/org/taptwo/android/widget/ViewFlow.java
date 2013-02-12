@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011 Patrik Åkerfeldt
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,7 +43,7 @@ import android.widget.Scroller;
  * The default size of the buffer is 3 elements on both sides of the currently
  * visible {@link View}, making up a total buffer size of 3 * 2 + 1 = 7. The
  * buffer size can be changed using the {@code sidebuffer} xml attribute.
- * 
+ *
  */
 public class ViewFlow extends AdapterView<Adapter> {
 
@@ -86,9 +86,23 @@ public class ViewFlow extends AdapterView<Adapter> {
 		}
 	};
 
+	/**
+	 * Receives call backs when a current {@link View} is scrolling.
+	 */
 	public static interface ViewAnimationListener {
 
-		void onChangePosition(int position, boolean rd, int next);
+		/**
+		 * This method is called when a current View is scrolling.
+		 *
+		 * @param position
+		 *            The position in the adapter of the {@link View} currently in focus.
+		 * @param hOffset
+		 *            The relative offset of animation from 0 to width.
+		 *            Negative value for right, positive for left.
+		 * @param rd
+		 *            True if the next view will be switched after animation.
+		 */
+		void onChangePosition(int position, int hOffset, boolean rd);
 	}
 
 	/**
@@ -98,7 +112,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 		/**
 		 * This method is called when a new View has been scrolled to.
-		 * 
+		 *
 		 * @param view
 		 *            the {@link View} currently in focus.
 		 * @param position
@@ -146,6 +160,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 		mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
 	}
 
+	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		if (newConfig.orientation != mLastOrientation) {
 			mLastOrientation = newConfig.orientation;
@@ -160,7 +175,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		
+
 		final int width = MeasureSpec.getSize(widthMeasureSpec);
 		final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
 		if (widthMode != MeasureSpec.EXACTLY && !isInEditMode()) {
@@ -430,23 +445,14 @@ public class ViewFlow extends AdapterView<Adapter> {
 		}
 
 		if (null != mViewAnimationListener) {
-			final int W = getWidth()/2;
-			int hAnim = Math.abs(h - (mCurrentAdapterIndex * getWidth()));
+			int W = getWidth()/2;
+			int hOffset = h - (mCurrentBufferIndex * getWidth());
 			boolean rd = false;
-			if (hAnim > W) {
+			if (Math.abs(hOffset) > W) {
 				rd = true;
-				hAnim = W - (hAnim - W);
 			}
 
-			int next;
-
-			if (h > oldh) {
-				next = mCurrentScreen + 1;
-			} else {
-				next = mCurrentScreen - 1;
-			}
-
-			mViewAnimationListener.onChangePosition((hAnim * 100) / W, rd ,next);
+			mViewAnimationListener.onChangePosition(mCurrentAdapterIndex, hOffset, rd);
 		}
 	}
 
@@ -502,7 +508,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 
 	/**
 	 * Scroll to the {@link View} in the view buffer specified by the index.
-	 * 
+	 *
 	 * @param indexInBuffer
 	 *            Index of the view in the view buffer.
 	 */
@@ -523,7 +529,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	/**
 	 * Set the listener that will receive notifications every time the {code
 	 * ViewFlow} scrolls.
-	 * 
+	 *
 	 * @param l
 	 *            the scroll listener
 	 */
@@ -548,7 +554,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	public void setAdapter(Adapter adapter) {
 		setAdapter(adapter, 0);
 	}
-	
+
 	public void setAdapter(Adapter adapter, int initialPosition) {
 		if (mAdapter != null) {
 			mAdapter.unregisterDataSetObserver(mDataSetObserver);
@@ -563,24 +569,24 @@ public class ViewFlow extends AdapterView<Adapter> {
 		}
 		if (mAdapter == null || mAdapter.getCount() == 0)
 			return;
-		
-		setSelection(initialPosition);		
+
+		setSelection(initialPosition);
 	}
-	
+
 	@Override
 	public View getSelectedView() {
 		return (mCurrentBufferIndex < mLoadedViews.size() ? mLoadedViews
 				.get(mCurrentBufferIndex) : null);
 	}
 
-    @Override
-    public int getSelectedItemPosition() {
-        return mCurrentAdapterIndex;
-    }
+	@Override
+	public int getSelectedItemPosition() {
+		return mCurrentAdapterIndex;
+	}
 
 	/**
 	 * Set the FlowIndicator
-	 * 
+	 *
 	 * @param flowIndicator
 	 */
 	public void setFlowIndicator(FlowIndicator flowIndicator) {
@@ -610,7 +616,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 		mScroller.forceFinished(true);
 		if (mAdapter == null)
 			return;
-		
+
 		position = Math.max(position, 0);
 		position = Math.min(position, mAdapter.getCount()-1);
 
@@ -720,7 +726,7 @@ public class ViewFlow extends AdapterView<Adapter> {
 	}
 
 	private View setupChild(View child, boolean addToEnd, boolean recycle) {
-		ViewGroup.LayoutParams p = (ViewGroup.LayoutParams) child
+		ViewGroup.LayoutParams p = child
 				.getLayoutParams();
 		if (p == null) {
 			p = new AbsListView.LayoutParams(
